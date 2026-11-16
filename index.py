@@ -7,7 +7,9 @@ MY_NAME = "Al Krishna Vinod"
 
 HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta
 name="viewport" content="width=device-width, initial-scale=1.0"><title>AI कृष्णा विनोद</title>
-<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" />
+<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" /><meta name="description" content="AI कृष्णा विनोद - हिंदी और अंग्रेजी में किसी भी सवाल का सटीक जवाब पाएं। फ्री AI सर्च इंजन, सामान्य ज्ञान (GK), और YouTube वीडियो खोजें।">
+<meta name="keywords" content="AI Krishna Vinod, AI कृष्णा विनोद, Hindi AI Search Engine, GK in Hindi, Bharat ke Rashtrapati, AI Search India, Free AI Assistant Hindi">
+
 body{font-family:Arial, sans-serif;background:#f8f9fa;color:#202124;text-align:center;padding:15px;margin:0}
 body.dark{background:#121212; color:#e8eaed}
 .top-bar{display:flex;justify-content:space-between;max-width:800px;margin:0 auto 10px}
