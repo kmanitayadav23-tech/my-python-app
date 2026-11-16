@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import urllib.request, urllib.parse, json, re, html
+import os
 
 MY_UPI_ID = "yourname@upi"
 MY_NAME = "Al Krishna Vinod"
@@ -190,6 +191,8 @@ class Handler(BaseHTTPRequestHandler):
             print("Error:", e)
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("0.0.0.0", 8085), Handler)
-    print("Server chalu ho gaya: http://127.0.0.1:8085")
+    port = int(os.environ.get("PORT", 8085))
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print(f"Server running on port {port}")
     server.serve_forever()
+    
