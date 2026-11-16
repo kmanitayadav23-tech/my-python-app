@@ -7,7 +7,7 @@ MY_NAME = "Al Krishna Vinod"
 
 HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta
 name="viewport" content="width=device-width, initial-scale=1.0"><title>AI कृष्णा विनोद</title>
-<style><meta name="google-site-verification" content="ma99Naev2NSEDe9rkOn1opjaRBKTxncemFEchmPa6hY" />
+
 body{font-family:Arial, sans-serif;background:#f8f9fa;color:#202124;text-align:center;padding:15px;margin:0}
 body.dark{background:#121212; color:#e8eaed}
 .top-bar{display:flex;justify-content:space-between;max-width:800px;margin:0 auto 10px}
