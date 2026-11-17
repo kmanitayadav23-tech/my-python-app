@@ -39,7 +39,7 @@ HTML_PAGE = """
 </head>
 <body>
     <div class="chat-container">
-        <div class="chat-header">Gemini Pro AI (Chat & Vision)</div>
+        <div class="chat-header">Krishna nand Vinod (Chat & Vision)</div>
         <div class="chat-box" id="chat-box">
             <div class="message ai-message">नमस्ते! मैं आपका जेमिनी AI हूँ। आप मुझसे कुछ भी पूछ सकते हैं या तस्वीर अपलोड करके उसके बारे में जान सकते हैं।</div>
         </div>
