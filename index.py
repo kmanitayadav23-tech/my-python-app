@@ -206,20 +206,15 @@ def smart_dynamic_search(hq, oq):
             return f"लाइव मौसम अपडेट ({city})", w_ans
         return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. यह जाँच करना कि यूजर ने अंग्रेजी में पूछा है या हिंदी में
-    # यदि सवाल में अंग्रेजी के शब्द हैं, तो अंग्रेजी विकिपीडिया प्राथमिकता लेगा
-    is_english_query = any(ord(char) < 128 for char in oq if char.isalpha())
-    
+    # 2. प्रमुख पदों के लिए सीधे हिंदी सर्च टर्म
     search_term = oq
     if "rashtrapati" in qc or "president" in qc:
-        search_term = "President of India" if is_english_query else "द्रौपदी मुर्मू"
+        search_term = "द्रौपदी मुर्मू" if not ("pehla" in qc or "first" in qc) else "राजेंद्र प्रसाद"
     elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
-        search_term = "Prime Minister of India" if is_english_query else "नरेंद्र मोदी"
+        search_term = "नरेंद्र मोदी" if not ("pehla" in qc or "first" in qc) else "जवाहरलाल नेहरू"
 
-    # 3. भाषा की प्राथमिकता तय करना
-    languages = ["en", "hi"] if is_english_query else ["hi", "en"]
-
-    for lang in languages:
+    # 3. हमेशा पहले हिंदी विकिपीडिया से जानकारी लाना
+    for lang in ["hi", "en"]:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {
                 "action": "query",
