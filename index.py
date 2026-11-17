@@ -1,13 +1,25 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import urllib.request, urllib.parse, json, re, html
 import os
+import google.generativeai as genai
 
+# Render के Environment से API Key ऑटोमेटिक उठाना
+api_key = os.environ.get("GOOGLE_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
+
+def get_ai_response(prompt_text):
+    if not os.environ.get("GOOGLE_API_KEY"):
+        return "API Key सेट नहीं है।"
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(f"हिंदी में जवाब दें: {prompt_text}")
+        return response.text
+    except Exception as e:
+        return f"त्रुटि: {str(e)}"
+      
 MY_UPI_ID = "yourname@upi"
 MY_NAME = "AI Krishna Vinod"
-
-# अगर आप असली AI (जैसे OpenAI या Gemini) की API Key लगाना चाहें तो यहाँ डाल सकते हैं, 
-# वरना यह अपने आप फ्री स्मार्ट सर्च से AI जवाब तैयार करेगा।
-AI_API_KEY = os.environ.get("AI_API_KEY", "")
 
 HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च और चैट</title>
 <meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" />
