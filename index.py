@@ -206,34 +206,46 @@ def smart_dynamic_search(hq, oq):
             return f"लाइव मौसम अपडेट ({city})", w_ans
         return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. प्रमुख पदों के लिए सीधे हिंदी सर्च टर्म
-    search_term = oq
+    # 2. प्रमुख पदों और सामान्य प्रश्नों के लिए सटीक सर्च टर्म की सूची
+    search_queries = [oq]
     if "rashtrapati" in qc or "president" in qc:
-        search_term = "द्रौपदी मुर्मू" if not ("pehla" in qc or "first" in qc) else "राजेंद्र प्रसाद"
+        search_queries = ["द्रौपदी मुर्मू", "President of India"]
     elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
-        search_term = "नरेंद्र मोदी" if not ("pehla" in qc or "first" in qc) else "जवाहरलाल नेहरू"
+        search_queries = ["नरेंद्र मोदी", "Prime Minister of India"]
 
-    # 3. हमेशा पहले हिंदी विकिपीडिया से जानकारी लाना
-    for lang in ["hi", "en"]:
-        try:
-            u = make_url(lang + ".wikipedia.org", "/w/api.php", {
-                "action": "query",
-                "list": "search",
-                "srsearch": search_term,
-                "format": "json"
-            })
-            req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
-            with urllib.request.urlopen(req, timeout=5) as res:
-                results = json.loads(res.read().decode("utf-8")).get("query", {}).get("search", [])
-                for it in results[:3]:
-                    ft = it.get("title", "")
-                    t, ext = fetch_wiki(lang, ft)
-                    if t and ext:
-                        return t, ext
-        except Exception:
-            pass
-            
-    return "परिणाम", "क्षमा करें, इस विषय पर वर्तमान में कोई जानकारी उपलब्ध नहीं है।"
+    # 3. विकिपीडिया से डेटा प्राप्त करने का सुरक्षित लूप
+    for query in search_queries:
+        for lang in ["hi", "en"]:
+            try:
+                u = make_url(lang + ".wikipedia.org", "/w/api.php", {
+                    "action": "query",
+                    "prop": "extracts",
+                    "exintro": True,
+                    "explaintext": True,
+                    "titles": query,
+                    "format": "json"
+                })
+                req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
+                with urllib.request.urlopen(req, timeout=5) as res:
+                    data = json.loads(res.read().decode("utf-8"))
+                    pages = data.get("query", {}).get("pages", {})
+                    for page_id, page_info in pages.items():
+                        if page_id != "-1" and "extract" in page_info:
+                            title = page_info.get("title", "परिणाम")
+                            extract = page_info.get("extract", "")
+                            if extract:
+                                return title, extract
+            except Exception:
+                pass
+
+    # 4. यदि इंटरनेट या विकिपीडिया से तुरंत रिस्पॉन्स न मिले, तो डिफ़ॉल्ट सटीक जवाब
+    if "rashtrapati" in qc or "president" in qc:
+        return "द्रौपदी मुर्मू", "भारत की वर्तमान राष्ट्रपति द्रौपदी मुर्मू हैं। उन्होंने 25 जुलाई 2022 को देश के 15वें राष्ट्रपति के रूप में पदभार ग्रहण किया है।"
+    elif "pradhanmantri" in qc or "prime minister" in qc:
+        return "नरेंद्र मोदी", "भारत के वर्तमान प्रधानमंत्री नरेंद्र मोदी हैं।"
+
+    return "AI कृष्णा विनोद", "आपकी खोज के लिए वर्तमान में सीधे विकिपीडिया पर डेटा उपलब्ध नहीं है, कृपया दूसरा सवाल पूछें।"
+      
     
 def generate_ai_chat_reply(user_msg):
     # बेसिक बातचीत के जवाब
