@@ -3,13 +3,11 @@ import urllib.request, urllib.parse, json, re, html
 import os
 
 MY_UPI_ID = "yourname@upi"
-MY_NAME = "Al Krishna Vinod"
+MY_NAME = "AI Krishna Vinod"
 
-HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta
-name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च इंजन</title>
-
-<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" /><meta name="description" content="AI कृष्णा विनोद - हिंदी और अंग्रेजी में किसी भी सवाल का सटीक जवाब पाएं। फ्री AI सर्च इंजन, सामान्य ज्ञान (GK), और YouTube वीडियो खोजें।">
-<meta name="keywords" content="AI Krishna Vinod, AI कृष्णा विनोद, Hindi AI Search Engine, GK in Hindi, Bharat ke Rashtrapati, AI Search India, Free AI Assistant Hindi">
+HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च इंजन</title>
+<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" /><meta name="description" content="AI Krishna Vinod (AI कृष्णा विनोद) - हिंदी और अंग्रेजी में किसी भी सवाल का सटीक जवाब पाएं। फ्री AI सर्च इंजन, सामान्य ज्ञान (GK), मौसम रिपोर्ट और YouTube वीडियो खोजें।">
+<meta name="keywords" content="AI Krishna Vinod, Krishna Vinod AI, AI कृष्णा विनोद, Hindi AI Search Engine, GK in Hindi, Bharat ke Rashtrapati, AI Search India, Free AI Assistant Hindi">
 <style>
 body{font-family:Arial, sans-serif;background:#f8f9fa;color:#202124;text-align:center;padding:15px;margin:0}
 body.dark{background:#121212; color:#e8eaed}
@@ -39,28 +37,37 @@ body.dark .modal-content{background:#202124;color:#fff}
 .amt-btn{padding:10px 16px; margin:5px;border:1px solid #1a73e8;background:#e8f0fe;color:#1a73e8;border-radius:10px;font-weight:bold;cursor:pointer}
 .pay-now-btn{display:block;width:100%;margin-top:15px;padding:12px 0;background:#1e8e3e;color:#fff;text-decoration:none;border-radius:25px;font-weight:bold}
 .close-btn{margin-top:12px;background:transparent;border:none;color:#5f6368;cursor:pointer}
+.popular-box{margin-top:35px;font-size:14px;color:#5f6368}
+.popular-box a{color:#1a73e8;margin:0 8px;text-decoration:none;display:inline-block;margin-top:5px}
 </style></head><body>
 <div class="top-bar"><button class="sub-btn" onclick="openPayModal()">Subscribe / Support</button><button class="mode-btn" onclick="toggleDark()">डार्क मोड</button></div>
 <div class="logo"><span>AI</span> Krishna Vinod</div>
-<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" id="micBtn" class="mic-btn" onclick="startVoice()">🎤</button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
-
+<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" value="__QUERY__" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" id="micBtn" class="mic-btn" onclick="startVoice()">🎤</button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
 __HINDI_TAG__
 __RESULT__
-<div id="payModal" class="modal"><div class="modal-content"><h3>AI कृष्णा विनोद को सपोर्ट करें</h3><p style="font-size:14px;">यह वेबसाइट सबके लिए फ्री है। आप अपनी मर्जी से सहयोग राशि भेज सकते हैं:</p>
+<div class="popular-box">
+<p><b>लोकप्रिय खोज (Popular Searches):</b></p>
+<a href="/?q=Bharat+ke+Rashtrapati">• भारत के राष्ट्रपति</a>
+<a href="/?q=Bharat+ke+Pradhanmantri">• भारत के प्रधानमंत्री</a>
+<a href="/?q=Delhi+ka+Mausam">• दिल्ली का मौसम</a>
+<p style="margin-top:20px;font-size:12px;"><b>AI Krishna Vinod (AI कृष्णा विनोद)</b> - स्मार्ट हिंदी AI सर्च इंजन</p>
+</div>
+<div id="payModal" class="modal"><div class="modal-content"><h3>AI Krishna Vinod को सपोर्ट करें</h3><p style="font-size:14px;">यह वेबसाइट सबके लिए फ्री है। आप अपनी मर्जी से सहयोग राशि भेज सकते हैं:</p>
 <div><button class="amt-btn" onclick="setAmount(10)">₹10</button><button class="amt-btn" onclick="setAmount(50)">₹50</button><button class="amt-btn" onclick="setAmount(100)">₹100</button></div>
 <p style="font-size:13px;margin-top:12px;">UPI ID: <b>__RAW_UPI_ID__</b></p>
-<a id="upiLink" href="upi://pay?pa=_UPI_ID_&pn=_UPI_NAME_&am=50&cu=INR" class="pay-now-btn">UPI ऐप से ₹50 भेजें</a>
+<a id="upiLink" href="upi://pay?pa=__UPI_ID__&pn=__UPI_NAME__&am=50&cu=INR" class="pay-now-btn">UPI ऐप से ₹50 भेजें</a>
 <button class="close-btn" onclick="closePayModal()">अभी नहीं (फ्री में चलाएं)</button></div></div>
 <script>
 function openPayModal(){document.getElementById("payModal").style.display="flex"}
 function closePayModal(){document.getElementById("payModal").style.display="none"}
-function setAmount(a){const l=document.getElementById("upiLink");l.href="upi://pay?pa=_UPI_ID_&pn=_UPI_NAME_&am="+a+"&cu=INR";l.innerText="UPI ऐप से ₹"+a+" भेजें"}
+function setAmount(a){const l=document.getElementById("upiLink");l.href="upi://pay?pa=__UPI_ID__&pn=__UPI_NAME__&am="+a+"&cu=INR";l.innerText="UPI ऐप से ₹"+a+" भेजें"}
 function toggleDark(){document.body.classList.toggle("dark")}
 function startVoice(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){alert("वॉइस सर्च सपोर्ट नहीं है। कृपया Chrome उपयोग करें।");return}const btn=document.getElementById("micBtn"),inp=document.getElementById("searchInput"),r=new S();r.lang="hi-IN";r.onstart=function(){btn.style.background="#1e8e3e";inp.placeholder="बोलिए, मैं सुन रहा हूँ..."};r.onend=function(){btn.style.background="#ea4335";inp.placeholder="English या हिंदी में कुछ भी लिखें..."};r.onerror=function(){alert("कृपया ब्राउज़र को Microphone की अनुमति (Allow) दें।")};r.onresult=function(e){inp.value=e.results[0][0].transcript;document.getElementById("searchForm").submit()};r.start()}
-
 function speakAnswer(){window.speechSynthesis.cancel();const n=document.getElementById("exactNameBox")?document.getElementById("exactNameBox").innerText+"|":"";const d=document.getElementById("answerText")?document.getElementById("answerText").innerText:"";const s=new SpeechSynthesisUtterance(n+d);s.lang="hi-IN";window.speechSynthesis.speak(s)}
 </script></body></html>"""
 
+def make_url(host, path, q=None):
+    return "https://" + host + path + (("?" + urllib.parse.urlencode(q)) if q else "")
 def fetch_weather(city):
     try:
         en_city = translate_text(city, "en")
@@ -73,12 +80,12 @@ def fetch_weather(city):
     except Exception:
         pass
     return None
-    
+
 def translate_text(text, tl="hi"):
     if not text:
         return text
     try:
-        u = make_url("translate.googleapis.com", "/translate_a/single", {"client": "gtx", "sl": "auto", "tl": tl, "dt": "t", "q": text[:1000]})
+        u = make_url("://googleapis.com", "/translate_a/single", {"client": "gtx", "sl": "auto", "tl": tl, "dt": "t", "q": text[:1000]})
         req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=5) as res:
             data = json.loads(res.read().decode("utf-8"))
@@ -98,11 +105,12 @@ def translate_text(text, tl="hi"):
     except Exception:
         pass
     return text
+
 def hinglish_to_hindi(text):
     if re.search(r"[\u0900-\u097F]", text):
         return text
     try:
-        u = make_url("inputtools.google.com", "/request", {"text": text, "itc": "hi-t-i0-und", "num": "1"})
+        u = make_url("://google.com", "/request", {"text": text, "itc": "hi-t-i0-und", "num": "1"})
         req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=4) as res:
             d = json.loads(res.read().decode("utf-8"))
@@ -119,7 +127,7 @@ def get_youtube_video_id(query):
     en_q = translate_text(query, "en")
     for q in ([query, en_q] if en_q.lower() != query.lower() else [query]):
         try:
-            u = make_url("www.youtube.com", "/results", {"search_query": q})
+            u = make_url("://youtube.com", "/results", {"search_query": q})
             req = urllib.request.Request(u, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as res:
                 ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', res.read().decode("utf-8", errors="ignore"))
@@ -132,7 +140,7 @@ def get_youtube_video_id(query):
 def fetch_wiki(lang, title):
     try:
         u = make_url(lang + ".wikipedia.org", "/api/rest_v1/page/summary/" + urllib.parse.quote(title))
-        req = urllib.request.Request(u, headers={"User-Agent": "AlKrishnaVinod/1.0"})
+        req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
         with urllib.request.urlopen(req, timeout=5) as res:
             d = json.loads(res.read().decode("utf-8"))
             ext = d.get("extract", "")
@@ -141,7 +149,6 @@ def fetch_wiki(lang, title):
     except Exception:
         pass
     return None, None
-
 def get_answer(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
@@ -154,15 +161,18 @@ def get_answer(hq, oq):
             return f"मौसम अपडेट ({city})", w_ans
         else:
             return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा सर्वर से नहीं मिल पा रहा है। कृपया थोड़ी देर बाद पुनः प्रयास करें।"
-            if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
+
+    if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
         if "उपराष्ट्रपति" in qc or "vice" in qc:
-            _, ext = fetch_wiki("hi", "जगदीप धनखड़")
-            return "जगदीप धनखड़ (भारत के उपराष्ट्रपति)", (ext or "जगदीप धनखड़ भारत के वर्तमान उपराष्ट्रपति हैं।")
+            _, ext = fetch_wiki("hi", "सी. पी. राधाकृष्णन")
+            return "सी. पी. राधाकृष्णन (भारत के उपराष्ट्रपति)", (ext or "सी. पी. राधाकृष्णन भारत के वर्तमान उपराष्ट्रपति हैं।")
         _, ext = fetch_wiki("hi", "द्रौपदी मुर्मू")
         return "द्रौपदी मुर्मू (भारत की वर्तमान राष्ट्रपति)", (ext or "द्रौपदी मुर्मू 25 जुलाई 2022 से भारत की 15वीं और वर्तमान राष्ट्रपति हैं।")
+
     if ("प्रधानमंत्री" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc)) and ("भारत" in qc or "india" in qc):
         _, ext = fetch_wiki("hi", "नरेन्द्र मोदी")
         return "नरेन्द्र मोदी (भारत के वर्तमान प्रधानमंत्री)", (ext or "नरेन्द्र मोदी भारत के वर्तमान प्रधानमंत्री हैं।")
+
     if "मुख्यमंत्री" in qc or "chief minister" in qc or re.search(r"\bcm\b", qc):
         if "उत्तर प्रदेश" in qc or "uttar pradesh" in qc or "up" in qc.split():
             _, ext = fetch_wiki("hi", "योगी आदित्यनाथ")
@@ -170,10 +180,11 @@ def get_answer(hq, oq):
         if "बिहार" in qc or "bihar" in qc:
             _, ext = fetch_wiki("hi", "नीतीश कुमार")
             return "नीतीश कुमार (बिहार के मुख्यमंत्री)", (ext or "नीतीश कुमार बिहार के वर्तमान मुख्यमंत्री हैं।")
+
     for lang, q_search in [("hi", hq), ("en", re.sub(r"\b(who is what is kaun hai kya hai current)\b", "", translate_text(oq, "en"), flags=re.I).strip())]:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {"action": "query", "list": "search", "srsearch": q_search, "format": "json"})
-            req = urllib.request.Request(u, headers={"User-Agent": "AlKrishnaVinod/1.0"})
+            req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
             with urllib.request.urlopen(req, timeout=5) as res:
                 for it in json.loads(res.read().decode("utf-8")).get("query", {}).get("search", [])[:2]:
                     ft = it.get("title", "")
@@ -217,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write("\n".join(xml).encode("utf-8"))
                 return
-                
+
             q = dict(urllib.parse.parse_qsl(p.query)).get("q", "").strip()
             res_html, h_tag = "", ""
             if q:
@@ -228,8 +239,8 @@ class Handler(BaseHTTPRequestHandler):
                 if ans:
                     res_html += '<div class="result-box"><div class="ai-tag"><span>AI कृष्णा विनोद सटीक जवाब (हिंदी)</span><button class="speak-btn" onclick="speakAnswer()">सुनें</button></div><div id="exactNameBox" class="direct-ans">' + html.escape(t) + '</div><div id="answerText">' + html.escape(ans) + '</div></div>'
                 vid = get_youtube_video_id(q) or (get_youtube_video_id(hq) if hq != q else None)
-                e_url = make_url("www.youtube-nocookie.com", "/embed/" + vid) if vid else make_url("www.youtube-nocookie.com", "/embed", {"listType": "search", "list": q})
-                yt_link = make_url("www.youtube.com", "/results", {"search_query": q})
+                e_url = make_url("://youtube-nocookie.com", "/embed/" + vid) if vid else make_url("://youtube-nocookie.com", "/embed", {"listType": "search", "list": q})
+                yt_link = make_url("://youtube.com", "/results", {"search_query": q})
                 res_html += '<div class="result-box"><div class="ai-tag"><span>AI टीवी - YouTube वीडियो</span></div><div class="tv-frame"><div class="video-container"><iframe src="' + html.escape(e_url) + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div></div><div style="text-align:center;"><a href="' + html.escape(yt_link) + '" target="_blank" class="yt-open-btn">YouTube ऐप में सभी वीडियो देखें</a></div></div>'
             page = HTML_PAGE.replace("__QUERY__", html.escape(q)).replace("__HINDI_TAG__", h_tag).replace("__RESULT__", res_html)
             page = page.replace("__RAW_UPI_ID__", html.escape(MY_UPI_ID)).replace("__UPI_ID__", urllib.parse.quote(MY_UPI_ID)).replace("__UPI_NAME__", urllib.parse.quote(MY_NAME))
@@ -245,4 +256,4 @@ if __name__ == "__main__":
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"Server running on port {port}")
     server.serve_forever()
-    
+        
