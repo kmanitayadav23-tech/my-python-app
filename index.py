@@ -41,7 +41,7 @@ body.dark .modal-content{background:#202124;color:#fff}
 </style></head><body>
 <div class="top-bar"><button class="sub-btn" onclick="openPayModal()">Subscribe / Support</button><button class="mode-btn" onclick="toggleDark()">डार्क मोड</button></div>
 <div class="logo"><span>AI</span> कृष्णा विनोद</div>
-<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" placeholder="English या हिंदी में कुछ भी लिखें..." value="__QUERY__" required><button type="button" class="mic-btn" onclick="startVoice()"></button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
+<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" class="mic-btn" onclick="startVoice()"></button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
 __HINDI_TAG__
 __RESULT__
 <div id="payModal" class="modal"><div class="modal-content"><h3>AI कृष्णा विनोद को सपोर्ट करें</h3><p style="font-size:14px;">यह वेबसाइट सबके लिए फ्री है। आप अपनी मर्जी से सहयोग राशि भेज सकते हैं:</p>
@@ -60,7 +60,18 @@ function speakAnswer(){window.speechSynthesis.cancel();const n=document.getEleme
 
 def make_url(host, path, q=None):
     return "https://" + host + path + (("?" + urllib.parse.urlencode(q)) if q else "")
-
+def fetch_weather(city):
+    try:
+        u = make_url("wttr.in", "/" + urllib.parse.quote(city), {"format3": "%l: %C +%t\n"})
+        req = urllib.request.Request(u, headers={"User-Agent": "curl"})
+        with urllib.request.urlopen(req, timeout=4) as res:
+            ans = res.read().decode("utf-8").strip()
+            if ans and "Unknown" not in ans:
+                return f"{city} का मौसम रिपोर्ट: {ans}"
+    except Exception:
+        pass
+    return None
+    
 def translate_text(text, tl="hi"):
     if not text:
         return text
@@ -131,6 +142,24 @@ def fetch_wiki(lang, title):
 
 def get_answer(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
+    
+    if "मौसम" in qc or "weather" in qc or "temperature" in qc:
+        words = oq.split()
+        city = "Delhi"
+        for w in ["in", "के", "ka", "ki"]:
+            if w in words:
+                try:
+                    idx = words.index(w)
+                    if idx + 1 < len(words):
+                        city = words[idx + 1]
+                except Exception:
+                    pass
+        w_ans = fetch_weather(city)
+        if w_ans:
+            return f"मौसम अपडेट ({city})", w_ans
+        else:
+            return "मौसम अपडेट", f"फिलहाल {city} का मौसम डेटा उपलब्ध नहीं है।"
+
     if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
         if "उपराष्ट्रपति" in qc or "vice" in qc:
             _, ext = fetch_wiki("hi", "जगदीप धनखड़")
