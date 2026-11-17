@@ -193,7 +193,7 @@ def fetch_wiki(lang, title):
     except Exception:
         pass
     return None, None
-def smart_dynamic_search(hq, oq):
+  def smart_dynamic_search(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
     # 1. लाइव मौसम चेक
@@ -204,18 +204,16 @@ def smart_dynamic_search(hq, oq):
         w_ans = fetch_weather(city)
         if w_ans:
             return f"लाइव मौसम अपडेट ({city})", w_ans
-        return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है। कृपया शहर का नाम सही लिखें।"
+        return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. स्मार्ट क्वेरी ऑप्टिमाइज़र (बिना किसी फिक्स नाम के खुद से ताज़ा या पुराना ढूंढने के लिए)
-    en_q = translate_text(oq, "en")
-    is_past = any(w in qc for w in ["पहला", "प्रथम", "पुराना", "पूर्व", "इतिहास", "first", "former", "old", "history", "pehla", "purana", "1st"])
+    # 2. सटीक और साफ सर्च टर्म तय करना (गलत परिणामों से बचने के लिए)
+    search_en = translate_text(oq, "en")
     
-    # अगर पुराना नहीं पूछा गया है और पद/पदवी (जैसे राष्ट्रपति, प्रधानमंत्री, CM, CEO) का सवाल है, तो "current" जोड़ें ताकि ताज़ा रिजल्ट आए
-    search_en = en_q
-    if not is_past and any(w in qc for w in ["राष्ट्रपति", "प्रधानमंत्री", "मुख्यमंत्री", "राज्यपाल", "president", "prime minister", "chief minister", "governor", "ceo", "rashtrapati", "pradhanmantri", "cm", "pm"]):
-        search_en = "current " + en_q
+    if "rashtrapati" in qc or "president" in qc:
+        search_en = "Droupadi Murmu" if not ("pehla" in qc or "first" in qc) else "Rajendra Prasad"
+    elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
+        search_en = "Narendra Modi" if not ("pehla" in qc or "first" in qc) else "Jawaharlal Nehru"
 
-    # पहले अंग्रेजी विकिपीडिया से सटीक और ताज़ा रिजल्ट खोजें (क्योंकि अंग्रेजी विकिपीडिया सबसे जल्दी अपडेट होती है) फिर हिंदी में अनुवाद करें
     for lang, query_term in [("en", search_en), ("hi", hq)]:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {
@@ -229,16 +227,12 @@ def smart_dynamic_search(hq, oq):
                 results = json.loads(res.read().decode("utf-8")).get("query", {}).get("search", [])
                 for it in results[:3]:
                     ft = it.get("title", "")
-                    # अगर लिस्ट या पुराना पेज नहीं मांगा गया है तो 'list of' को छोड़ें
-                    if not is_past and ("list of" in ft.lower() or "सूची" in ft.lower()):
-                        continue
                     t, ext = fetch_wiki(lang, ft)
                     if t and ext:
                         return t, ext
         except Exception:
             pass
     return None, None
-
 def generate_ai_chat_reply(user_msg):
     # बेसिक बातचीत के जवाब
     low = user_msg.lower().strip()
