@@ -142,7 +142,7 @@ def fetch_wiki(lang, title):
         pass
     return None, None
 
- def get_answer(hq, oq):
+def get_answer(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
     if "मौसम" in qc or "weather" in qc or "temperature" in qc or "तापमान" in qc:
