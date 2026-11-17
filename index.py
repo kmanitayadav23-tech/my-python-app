@@ -193,7 +193,7 @@ def fetch_wiki(lang, title):
     except Exception:
         pass
     return None, None
-  def smart_dynamic_search(hq, oq):
+def smart_dynamic_search(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
     # 1. लाइव मौसम चेक
