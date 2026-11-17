@@ -6,7 +6,8 @@ MY_UPI_ID = "yourname@upi"
 MY_NAME = "Al Krishna Vinod"
 
 HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta
-name="viewport" content="width=device-width, initial-scale=1.0"><title>AI कृष्णा विनोद</title>
+name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च इंजन</title>
+
 <meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" /><meta name="description" content="AI कृष्णा विनोद - हिंदी और अंग्रेजी में किसी भी सवाल का सटीक जवाब पाएं। फ्री AI सर्च इंजन, सामान्य ज्ञान (GK), और YouTube वीडियो खोजें।">
 <meta name="keywords" content="AI Krishna Vinod, AI कृष्णा विनोद, Hindi AI Search Engine, GK in Hindi, Bharat ke Rashtrapati, AI Search India, Free AI Assistant Hindi">
 <style>
@@ -40,8 +41,9 @@ body.dark .modal-content{background:#202124;color:#fff}
 .close-btn{margin-top:12px;background:transparent;border:none;color:#5f6368;cursor:pointer}
 </style></head><body>
 <div class="top-bar"><button class="sub-btn" onclick="openPayModal()">Subscribe / Support</button><button class="mode-btn" onclick="toggleDark()">डार्क मोड</button></div>
-<div class="logo"><span>AI</span> कृष्णा विनोद</div>
-<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" class="mic-btn" onclick="startVoice()"></button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
+<div class="logo"><span>AI</span> Krishna Vinod</div>
+<form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" id="micBtn" class="mic-btn" onclick="startVoice()">🎤</button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
+
 __HINDI_TAG__
 __RESULT__
 <div id="payModal" class="modal"><div class="modal-content"><h3>AI कृष्णा विनोद को सपोर्ट करें</h3><p style="font-size:14px;">यह वेबसाइट सबके लिए फ्री है। आप अपनी मर्जी से सहयोग राशि भेज सकते हैं:</p>
@@ -54,20 +56,20 @@ function openPayModal(){document.getElementById("payModal").style.display="flex"
 function closePayModal(){document.getElementById("payModal").style.display="none"}
 function setAmount(a){const l=document.getElementById("upiLink");l.href="upi://pay?pa=_UPI_ID_&pn=_UPI_NAME_&am="+a+"&cu=INR";l.innerText="UPI ऐप से ₹"+a+" भेजें"}
 function toggleDark(){document.body.classList.toggle("dark")}
-function startVoice(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){alert("वॉइस सर्च सपोर्ट नहीं है।");return}const r=new S();r.lang="hi-IN";r.start();r.onresult=function(e){document.getElementById("searchInput").value=e.results[0].transcript;document.getElementById("searchForm").submit()}}
+function startVoice(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){alert("वॉइस सर्च सपोर्ट नहीं है। कृपया Chrome उपयोग करें।");return}const btn=document.getElementById("micBtn"),inp=document.getElementById("searchInput"),r=new S();r.lang="hi-IN";r.onstart=function(){btn.style.background="#1e8e3e";inp.placeholder="बोलिए, मैं सुन रहा हूँ..."};r.onend=function(){btn.style.background="#ea4335";inp.placeholder="English या हिंदी में कुछ भी लिखें..."};r.onerror=function(){alert("कृपया ब्राउज़र को Microphone की अनुमति (Allow) दें।")};r.onresult=function(e){inp.value=e.results[0][0].transcript;document.getElementById("searchForm").submit()};r.start()}
+
 function speakAnswer(){window.speechSynthesis.cancel();const n=document.getElementById("exactNameBox")?document.getElementById("exactNameBox").innerText+"|":"";const d=document.getElementById("answerText")?document.getElementById("answerText").innerText:"";const s=new SpeechSynthesisUtterance(n+d);s.lang="hi-IN";window.speechSynthesis.speak(s)}
 </script></body></html>"""
 
-def make_url(host, path, q=None):
-    return "https://" + host + path + (("?" + urllib.parse.urlencode(q)) if q else "")
 def fetch_weather(city):
     try:
-        u = make_url("wttr.in", "/" + urllib.parse.quote(city), {"format3": "%l: %C +%t\n"})
-        req = urllib.request.Request(u, headers={"User-Agent": "curl"})
-        with urllib.request.urlopen(req, timeout=4) as res:
+        en_city = translate_text(city, "en")
+        u = make_url("wttr.in", "/" + urllib.parse.quote(en_city), {"format": "%l:+%C+%t+(हवा:+%w,+नमी:+%h)"})
+        req = urllib.request.Request(u, headers={"User-Agent": "curl/7.68.0"})
+        with urllib.request.urlopen(req, timeout=8) as res:
             ans = res.read().decode("utf-8").strip()
-            if ans and "Unknown" not in ans:
-                return f"{city} का मौसम रिपोर्ट: {ans}"
+            if ans and "Unknown" not in ans and "<html" not in ans.lower():
+                return translate_text(ans, "hi")
     except Exception:
         pass
     return None
@@ -140,27 +142,19 @@ def fetch_wiki(lang, title):
         pass
     return None, None
 
-def get_answer(hq, oq):
+ def get_answer(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
-    
-    if "मौसम" in qc or "weather" in qc or "temperature" in qc:
-        words = oq.split()
-        city = "Delhi"
-        for w in ["in", "के", "ka", "ki"]:
-            if w in words:
-                try:
-                    idx = words.index(w)
-                    if idx + 1 < len(words):
-                        city = words[idx + 1]
-                except Exception:
-                    pass
+
+    if "मौसम" in qc or "weather" in qc or "temperature" in qc or "तापमान" in qc:
+        clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai)\b", "", oq, flags=re.I)
+        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.|,)", "", clean_city).strip()
+        city = clean_city if len(clean_city) >= 2 else "Delhi"
         w_ans = fetch_weather(city)
         if w_ans:
             return f"मौसम अपडेट ({city})", w_ans
         else:
-            return "मौसम अपडेट", f"फिलहाल {city} का मौसम डेटा उपलब्ध नहीं है।"
-
-    if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
+            return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा सर्वर से नहीं मिल पा रहा है। कृपया थोड़ी देर बाद पुनः प्रयास करें।"
+            if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
         if "उपराष्ट्रपति" in qc or "vice" in qc:
             _, ext = fetch_wiki("hi", "जगदीप धनखड़")
             return "जगदीप धनखड़ (भारत के उपराष्ट्रपति)", (ext or "जगदीप धनखड़ भारत के वर्तमान उपराष्ट्रपति हैं।")
@@ -195,10 +189,35 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             p = urllib.parse.urlparse(self.path)
+            host = self.headers.get("Host", "://onrender.com")
+            base_url = f"https://{host}"
+
             if p.path == "/favicon.ico":
                 self.send_response(204)
                 self.end_headers()
                 return
+
+            if p.path == "/robots.txt":
+                robots = f"User-agent: *\nAllow: /\nSitemap: {base_url}/sitemap.xml\n"
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(robots.encode("utf-8"))
+                return
+
+            if p.path == "/sitemap.xml":
+                topics = ["Bharat+ke+Rashtrapati", "Bharat+ke+Pradhanmantri", "Uttar+Pradesh+ke+Mukhyamantri", "Bihar+ke+Mukhyamantri", "Delhi+ka+Mausam"]
+                xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://sitemaps.org">']
+                xml.append(f'<url><loc>{base_url}/</loc><priority>1.0</priority></url>')
+                for t in topics:
+                    xml.append(f'<url><loc>{base_url}/?q={t}</loc><priority>0.8</priority></url>')
+                xml.append('</urlset>')
+                self.send_response(200)
+                self.send_header("Content-type", "application/xml; charset=utf-8")
+                self.end_headers()
+                self.wfile.write("\n".join(xml).encode("utf-8"))
+                return
+                
             q = dict(urllib.parse.parse_qsl(p.query)).get("q", "").strip()
             res_html, h_tag = "", ""
             if q:
