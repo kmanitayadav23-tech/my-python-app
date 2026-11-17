@@ -199,27 +199,32 @@ def smart_dynamic_search(hq, oq):
     # 1. लाइव मौसम चेक
     if any(w in qc for w in ["मौसम", "weather", "temperature", "तापमान", "mausam"]):
         clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai|mausam)\b", "", oq, flags=re.I)
-        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.|,)", "", clean_city).strip()
+        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.,)", "", clean_city).strip()
         city = clean_city if len(clean_city) >= 2 else "Delhi"
         w_ans = fetch_weather(city)
         if w_ans:
             return f"लाइव मौसम अपडेट ({city})", w_ans
         return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. सटीक और साफ सर्च टर्म तय करना (गलत परिणामों से बचने के लिए)
-    search_en = translate_text(oq, "en")
+    # 2. यह जाँच करना कि यूजर ने अंग्रेजी में पूछा है या हिंदी में
+    # यदि सवाल में अंग्रेजी के शब्द हैं, तो अंग्रेजी विकिपीडिया प्राथमिकता लेगा
+    is_english_query = any(ord(char) < 128 for char in oq if char.isalpha())
     
+    search_term = oq
     if "rashtrapati" in qc or "president" in qc:
-        search_en = "Droupadi Murmu" if not ("pehla" in qc or "first" in qc) else "Rajendra Prasad"
+        search_term = "President of India" if is_english_query else "द्रौपदी मुर्मू"
     elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
-        search_en = "Narendra Modi" if not ("pehla" in qc or "first" in qc) else "Jawaharlal Nehru"
+        search_term = "Prime Minister of India" if is_english_query else "नरेंद्र मोदी"
 
-    for lang, query_term in [("en", search_en), ("hi", hq)]:
+    # 3. भाषा की प्राथमिकता तय करना
+    languages = ["en", "hi"] if is_english_query else ["hi", "en"]
+
+    for lang in languages:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {
                 "action": "query",
                 "list": "search",
-                "srsearch": query_term,
+                "srsearch": search_term,
                 "format": "json"
             })
             req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
@@ -232,7 +237,9 @@ def smart_dynamic_search(hq, oq):
                         return t, ext
         except Exception:
             pass
-    return None, None
+            
+    return "परिणाम", "क्षमा करें, इस विषय पर वर्तमान में कोई जानकारी उपलब्ध नहीं है।"
+    
 def generate_ai_chat_reply(user_msg):
     # बेसिक बातचीत के जवाब
     low = user_msg.lower().strip()
