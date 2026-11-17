@@ -5,9 +5,12 @@ import os
 MY_UPI_ID = "yourname@upi"
 MY_NAME = "AI Krishna Vinod"
 
-HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च इंजन</title>
-<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" /><meta name="description" content="AI Krishna Vinod (AI कृष्णा विनोद) - हिंदी और अंग्रेजी में किसी भी सवाल का सटीक जवाब पाएं। फ्री AI सर्च इंजन, सामान्य ज्ञान (GK), मौसम रिपोर्ट और YouTube वीडियो खोजें।">
-<meta name="keywords" content="AI Krishna Vinod, Krishna Vinod AI, AI कृष्णा विनोद, Hindi AI Search Engine, GK in Hindi, Bharat ke Rashtrapati, AI Search India, Free AI Assistant Hindi">
+# अगर आप असली AI (जैसे OpenAI या Gemini) की API Key लगाना चाहें तो यहाँ डाल सकते हैं, 
+# वरना यह अपने आप फ्री स्मार्ट सर्च से AI जवाब तैयार करेगा।
+AI_API_KEY = os.environ.get("AI_API_KEY", "")
+
+HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Krishna Vinod (AI कृष्णा विनोद) - स्मार्ट हिंदी AI सर्च और चैट</title>
+<meta name="google-site-verification" content="3OdiIYAFGY4CBWhEWAXInzldWZ5v0uohWuVqWIzHYsE" />
 <style>
 body{font-family:Arial, sans-serif;background:#f8f9fa;color:#202124;text-align:center;padding:15px;margin:0}
 body.dark{background:#121212; color:#e8eaed}
@@ -31,6 +34,18 @@ body.dark .direct-ans{background:#1e2a38;color:#8ab4f8}
 .video-container{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}
 .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
 .yt-open-btn{display:inline-block;margin-top:10px;padding:8px 16px;background:#cc0000;color:#fff;text-decoration:none;border-radius:20px;font-size:13px;font-weight:bold}
+/* AI Chat Box Styles */
+.chat-box{max-width:650px;margin:25px auto;background:#fff;border-radius:15px;box-shadow:0 2px 12px rgba(0,0,0,0.1);overflow:hidden;text-align:left}
+body.dark .chat-box{background:#202124}
+.chat-header{background:#1a73e8;color:#fff;padding:12px 18px;font-weight:bold;font-size:16px}
+.chat-messages{height:240px;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
+.msg-user{align-self:flex-end;background:#1a73e8;color:#fff;padding:10px 14px;border-radius:15px 15px 0 15px;max-width:80%;font-size:14px}
+.msg-ai{align-self:flex-start;background:#f1f3f4;color:#202124;padding:10px 14px;border-radius:15px 15px 15px 0;max-width:80%;font-size:14px;line-height:1.5}
+body.dark .msg-ai{background:#303134;color:#e8eaed}
+.chat-input-area{display:flex;border-top:1px solid #dfe1e5;padding:10px}
+body.dark .chat-input-area{border-color:#5f6368}
+.chat-input-area input{flex:1;border:none;outline:none;padding:8px 12px;font-size:15px;background:transparent;color:inherit}
+.chat-send-btn{background:#1a73e8;color:#fff;border:none;padding:8px 18px;border-radius:20px;font-weight:bold;cursor:pointer}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6); justify-content:center;align-items:center;z-index:1000}
 .modal-content{background:#fff;color:#202124;padding:25px;border-radius:18px;max-width:350px;width:90%;text-align:center}
 body.dark .modal-content{background:#202124;color:#fff}
@@ -45,11 +60,24 @@ body.dark .modal-content{background:#202124;color:#fff}
 <form id="searchForm" method="GET" action="/"><div class="search-container"><input type="text" id="searchInput" name="q" value="__QUERY__" placeholder="English या हिंदी में कुछ भी लिखें..." required><button type="button" id="micBtn" class="mic-btn" onclick="startVoice()">🎤</button></div><button type="submit" class="search-btn">खोजें (Search)</button></form>
 __HINDI_TAG__
 __RESULT__
+
+<!-- AI Chat Section -->
+<div class="chat-box">
+  <div class="chat-header">💬 AI कृष्णा विनोद चैट (सीधे सवाल पूछें)</div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg-ai">नमस्ते! मैं AI कृष्णा विनोद हूँ। आप मुझसे कुछ भी पूछ सकते हैं—वर्तमान समाचार, सामान्य ज्ञान, या किसी भी विषय पर बात करें!</div>
+  </div>
+  <div class="chat-input-area">
+    <input type="text" id="chatInput" placeholder="यहाँ अपना संदेश लिखें..." onkeypress="if(event.key==='Enter') sendChat()">
+    <button class="chat-send-btn" onclick="sendChat()">भेजें</button>
+  </div>
+</div>
+
 <div class="popular-box">
 <p><b>लोकप्रिय खोज (Popular Searches):</b></p>
-<a href="/?q=Bharat+ke+Rashtrapati">• भारत के राष्ट्रपति</a>
-<a href="/?q=Bharat+ke+Pradhanmantri">• भारत के प्रधानमंत्री</a>
-<a href="/?q=Delhi+ka+Mausam">• दिल्ली का मौसम</a>
+<a href="/?q=Bharat+ke+vartaman+Rashtrapati">• भारत के वर्तमान राष्ट्रपति</a>
+<a href="/?q=Bharat+ke+vartaman+Pradhanmantri">• भारत के वर्तमान प्रधानमंत्री</a>
+<a href="/?q=Delhi+ka+mausam">• दिल्ली का मौसम</a>
 <p style="margin-top:20px;font-size:12px;"><b>AI Krishna Vinod (AI कृष्णा विनोद)</b> - स्मार्ट हिंदी AI सर्च इंजन</p>
 </div>
 <div id="payModal" class="modal"><div class="modal-content"><h3>AI Krishna Vinod को सपोर्ट करें</h3><p style="font-size:14px;">यह वेबसाइट सबके लिए फ्री है। आप अपनी मर्जी से सहयोग राशि भेज सकते हैं:</p>
@@ -64,28 +92,37 @@ function setAmount(a){const l=document.getElementById("upiLink");l.href="upi://p
 function toggleDark(){document.body.classList.toggle("dark")}
 function startVoice(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){alert("वॉइस सर्च सपोर्ट नहीं है। कृपया Chrome उपयोग करें।");return}const btn=document.getElementById("micBtn"),inp=document.getElementById("searchInput"),r=new S();r.lang="hi-IN";r.onstart=function(){btn.style.background="#1e8e3e";inp.placeholder="बोलिए, मैं सुन रहा हूँ..."};r.onend=function(){btn.style.background="#ea4335";inp.placeholder="English या हिंदी में कुछ भी लिखें..."};r.onerror=function(){alert("कृपया ब्राउज़र को Microphone की अनुमति (Allow) दें।")};r.onresult=function(e){inp.value=e.results[0][0].transcript;document.getElementById("searchForm").submit()};r.start()}
 function speakAnswer(){window.speechSynthesis.cancel();const n=document.getElementById("exactNameBox")?document.getElementById("exactNameBox").innerText+"|":"";const d=document.getElementById("answerText")?document.getElementById("answerText").innerText:"";const s=new SpeechSynthesisUtterance(n+d);s.lang="hi-IN";window.speechSynthesis.speak(s)}
-</script></body></html>"""
 
+async function sendChat(){
+  const inp = document.getElementById("chatInput");
+  const msg = inp.value.trim();
+  if(!msg) return;
+  const box = document.getElementById("chatMessages");
+  box.innerHTML += '<div class="msg-user">' + msg.replace(/</g,"&lt;") + '</div>';
+  inp.value = "";
+  box.scrollTop = box.scrollHeight;
+  const waitId = "wait_" + Date.now();
+  box.innerHTML += '<div class="msg-ai" id="'+waitId+'">सोच रहा हूँ...</div>';
+  box.scrollTop = box.scrollHeight;
+  try {
+    const res = await fetch("/api/chat?q=" + encodeURIComponent(msg));
+    const data = await res.json();
+    document.getElementById(waitId).innerText = data.reply;
+  } catch(e) {
+    document.getElementById(waitId).innerText = "क्षमा करें, अभी सर्वर से संपर्क नहीं हो पा रहा है।";
+  }
+  box.scrollTop = box.scrollHeight;
+}
+</script></body></html>"""
 def make_url(host, path, q=None):
+    host = host.lstrip(":/")
     return "https://" + host + path + (("?" + urllib.parse.urlencode(q)) if q else "")
-def fetch_weather(city):
-    try:
-        en_city = translate_text(city, "en")
-        u = make_url("wttr.in", "/" + urllib.parse.quote(en_city), {"format": "%l:+%C+%t+(हवा:+%w,+नमी:+%h)"})
-        req = urllib.request.Request(u, headers={"User-Agent": "curl/7.68.0"})
-        with urllib.request.urlopen(req, timeout=8) as res:
-            ans = res.read().decode("utf-8").strip()
-            if ans and "Unknown" not in ans and "<html" not in ans.lower():
-                return translate_text(ans, "hi")
-    except Exception:
-        pass
-    return None
 
 def translate_text(text, tl="hi"):
     if not text:
         return text
     try:
-        u = make_url("://googleapis.com", "/translate_a/single", {"client": "gtx", "sl": "auto", "tl": tl, "dt": "t", "q": text[:1000]})
+        u = make_url("googleapis.com", "/translate_a/single", {"client": "gtx", "sl": "auto", "tl": tl, "dt": "t", "q": text[:1000]})
         req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=5) as res:
             data = json.loads(res.read().decode("utf-8"))
@@ -94,23 +131,13 @@ def translate_text(text, tl="hi"):
                 return out.strip()
     except Exception:
         pass
-    try:
-        lp = "en|hi" if tl == "hi" else "hi|en"
-        u = make_url("api.mymemory.translated.net", "/get", {"q": text[:480], "langpair": lp})
-        req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as res:
-            t = json.loads(res.read().decode("utf-8")).get("responseData", {}).get("translatedText", "")
-            if t and "MYMEMORY" not in t:
-                return t.strip()
-    except Exception:
-        pass
     return text
 
 def hinglish_to_hindi(text):
     if re.search(r"[\u0900-\u097F]", text):
         return text
     try:
-        u = make_url("://google.com", "/request", {"text": text, "itc": "hi-t-i0-und", "num": "1"})
+        u = make_url("inputtools.google.com", "/request", {"text": text, "itc": "hi-t-i0-und", "num": "1"})
         req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=4) as res:
             d = json.loads(res.read().decode("utf-8"))
@@ -122,12 +149,30 @@ def hinglish_to_hindi(text):
         pass
     return translate_text(text, "hi")
 
+def fetch_weather(city):
+    try:
+        en_city = translate_text(city, "en")
+        # Open-Meteo या wttr.in का साफ उपयोग
+        u = make_url("wttr.in", "/" + urllib.parse.quote(en_city), {"format": "j1"})
+        req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            curr = data["current_condition"][0]
+            temp = curr["temp_C"]
+            feels = curr["FeelsLikeC"]
+            humidity = curr["humidity"]
+            desc = translate_text(curr["weatherDesc"][0]["value"], "hi")
+            return f"{city} का वर्तमान तापमान {temp}°C है (महसूस: {feels}°C)। मौसम: {desc}, नमी: {humidity}%।"
+    except Exception:
+        pass
+    return None
+
 def get_youtube_video_id(query):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36", "Cookie": "CONSENT=YES+cb.20230531-07-p0.en+FX+410"}
     en_q = translate_text(query, "en")
     for q in ([query, en_q] if en_q.lower() != query.lower() else [query]):
         try:
-            u = make_url("://youtube.com", "/results", {"search_query": q})
+            u = make_url("youtube.com", "/results", {"search_query": q})
             req = urllib.request.Request(u, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as res:
                 ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', res.read().decode("utf-8", errors="ignore"))
@@ -136,7 +181,6 @@ def get_youtube_video_id(query):
         except Exception:
             pass
     return None
-
 def fetch_wiki(lang, title):
     try:
         u = make_url(lang + ".wikipedia.org", "/api/rest_v1/page/summary/" + urllib.parse.quote(title))
@@ -149,63 +193,85 @@ def fetch_wiki(lang, title):
     except Exception:
         pass
     return None, None
-def get_answer(hq, oq):
+def smart_dynamic_search(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
-    if "मौसम" in qc or "weather" in qc or "temperature" in qc or "तापमान" in qc:
-        clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai)\b", "", oq, flags=re.I)
+    # 1. लाइव मौसम चेक
+    if any(w in qc for w in ["मौसम", "weather", "temperature", "तापमान", "mausam"]):
+        clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai|mausam)\b", "", oq, flags=re.I)
         clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.|,)", "", clean_city).strip()
         city = clean_city if len(clean_city) >= 2 else "Delhi"
         w_ans = fetch_weather(city)
         if w_ans:
-            return f"मौसम अपडेट ({city})", w_ans
-        else:
-            return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा सर्वर से नहीं मिल पा रहा है। कृपया थोड़ी देर बाद पुनः प्रयास करें।"
+            return f"लाइव मौसम अपडेट ({city})", w_ans
+        return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है। कृपया शहर का नाम सही लिखें।"
 
-    if ("राष्ट्रपति" in qc or "president" in qc) and ("भारत" in qc or "india" in qc):
-        if "उपराष्ट्रपति" in qc or "vice" in qc:
-            _, ext = fetch_wiki("hi", "सी. पी. राधाकृष्णन")
-            return "सी. पी. राधाकृष्णन (भारत के उपराष्ट्रपति)", (ext or "सी. पी. राधाकृष्णन भारत के वर्तमान उपराष्ट्रपति हैं।")
-        _, ext = fetch_wiki("hi", "द्रौपदी मुर्मू")
-        return "द्रौपदी मुर्मू (भारत की वर्तमान राष्ट्रपति)", (ext or "द्रौपदी मुर्मू 25 जुलाई 2022 से भारत की 15वीं और वर्तमान राष्ट्रपति हैं।")
+    # 2. स्मार्ट क्वेरी ऑप्टिमाइज़र (बिना किसी फिक्स नाम के खुद से ताज़ा या पुराना ढूंढने के लिए)
+    en_q = translate_text(oq, "en")
+    is_past = any(w in qc for w in ["पहला", "प्रथम", "पुराना", "पूर्व", "इतिहास", "first", "former", "old", "history", "pehla", "purana", "1st"])
+    
+    # अगर पुराना नहीं पूछा गया है और पद/पदवी (जैसे राष्ट्रपति, प्रधानमंत्री, CM, CEO) का सवाल है, तो "current" जोड़ें ताकि ताज़ा रिजल्ट आए
+    search_en = en_q
+    if not is_past and any(w in qc for w in ["राष्ट्रपति", "प्रधानमंत्री", "मुख्यमंत्री", "राज्यपाल", "president", "prime minister", "chief minister", "governor", "ceo", "rashtrapati", "pradhanmantri", "cm", "pm"]):
+        search_en = "current " + en_q
 
-    if ("प्रधानमंत्री" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc)) and ("भारत" in qc or "india" in qc):
-        _, ext = fetch_wiki("hi", "नरेन्द्र मोदी")
-        return "नरेन्द्र मोदी (भारत के वर्तमान प्रधानमंत्री)", (ext or "नरेन्द्र मोदी भारत के वर्तमान प्रधानमंत्री हैं।")
-
-    if "मुख्यमंत्री" in qc or "chief minister" in qc or re.search(r"\bcm\b", qc):
-        if "उत्तर प्रदेश" in qc or "uttar pradesh" in qc or "up" in qc.split():
-            _, ext = fetch_wiki("hi", "योगी आदित्यनाथ")
-            return "योगी आदित्यनाथ (उत्तर प्रदेश के मुख्यमंत्री)", (ext or "योगी आदित्यनाथ उत्तर प्रदेश के वर्तमान मुख्यमंत्री हैं।")
-        if "बिहार" in qc or "bihar" in qc:
-            _, ext = fetch_wiki("hi", "नीतीश कुमार")
-            return "नीतीश कुमार (बिहार के मुख्यमंत्री)", (ext or "नीतीश कुमार बिहार के वर्तमान मुख्यमंत्री हैं।")
-
-    for lang, q_search in [("hi", hq), ("en", re.sub(r"\b(who is what is kaun hai kya hai current)\b", "", translate_text(oq, "en"), flags=re.I).strip())]:
+    # पहले अंग्रेजी विकिपीडिया से सटीक और ताज़ा रिजल्ट खोजें (क्योंकि अंग्रेजी विकिपीडिया सबसे जल्दी अपडेट होती है) फिर हिंदी में अनुवाद करें
+    for lang, query_term in [("en", search_en), ("hi", hq)]:
         try:
-            u = make_url(lang + ".wikipedia.org", "/w/api.php", {"action": "query", "list": "search", "srsearch": q_search, "format": "json"})
+            u = make_url(lang + ".wikipedia.org", "/w/api.php", {
+                "action": "query",
+                "list": "search",
+                "srsearch": query_term,
+                "format": "json"
+            })
             req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
             with urllib.request.urlopen(req, timeout=5) as res:
-                for it in json.loads(res.read().decode("utf-8")).get("query", {}).get("search", [])[:2]:
+                results = json.loads(res.read().decode("utf-8")).get("query", {}).get("search", [])
+                for it in results[:3]:
                     ft = it.get("title", "")
-                    if not any(b in ft.replace("\u093c", "").lower() for b in ["फखरुद्दीन", "fakhruddin", "सूची", "list of"]):
-                        t, ext = fetch_wiki(lang, ft)
-                        if t and ext:
-                            return t, ext
+                    # अगर लिस्ट या पुराना पेज नहीं मांगा गया है तो 'list of' को छोड़ें
+                    if not is_past and ("list of" in ft.lower() or "सूची" in ft.lower()):
+                        continue
+                    t, ext = fetch_wiki(lang, ft)
+                    if t and ext:
+                        return t, ext
         except Exception:
             pass
     return None, None
+
+def generate_ai_chat_reply(user_msg):
+    # बेसिक बातचीत के जवाब
+    low = user_msg.lower().strip()
+    if any(g in low for g in ["hello", "hi", "namaste", "नमस्ते", "हेलो", "कैसे हो"]):
+        return "नमस्ते! मैं AI कृष्णा विनोद हूँ। मैं आपकी क्या सहायता कर सकता हूँ?"
+    
+    # डायनेमिक सर्च से जानकारी निकाल कर AI की तरह जवाब देना
+    hq = hinglish_to_hindi(user_msg)
+    title, ans = smart_dynamic_search(hq, user_msg)
+    if ans:
+        return f"📌 {title}:\n\n{ans}"
+    return "मुझे इस विषय पर अभी सटीक जानकारी नहीं मिल पाई है। कृपया अपना सवाल थोड़ा स्पष्ट करके पूछें!"
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             p = urllib.parse.urlparse(self.path)
-            host = self.headers.get("Host", "://onrender.com")
+            host = self.headers.get("Host", "onrender.com")
             base_url = f"https://{host}"
 
             if p.path == "/favicon.ico":
                 self.send_response(204)
                 self.end_headers()
+                return
+
+            # AI Chat API Endpoint
+            if p.path == "/api/chat":
+                q = dict(urllib.parse.parse_qsl(p.query)).get("q", "").strip()
+                reply = generate_ai_chat_reply(q)
+                self.send_response(200)
+                self.send_header("Content-type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"reply": reply}).encode("utf-8"))
                 return
 
             if p.path == "/robots.txt":
@@ -216,32 +282,20 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(robots.encode("utf-8"))
                 return
 
-            if p.path == "/sitemap.xml":
-                topics = ["Bharat+ke+Rashtrapati", "Bharat+ke+Pradhanmantri", "Uttar+Pradesh+ke+Mukhyamantri", "Bihar+ke+Mukhyamantri", "Delhi+ka+Mausam"]
-                xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://sitemaps.org">']
-                xml.append(f'<url><loc>{base_url}/</loc><priority>1.0</priority></url>')
-                for t in topics:
-                    xml.append(f'<url><loc>{base_url}/?q={t}</loc><priority>0.8</priority></url>')
-                xml.append('</urlset>')
-                self.send_response(200)
-                self.send_header("Content-type", "application/xml; charset=utf-8")
-                self.end_headers()
-                self.wfile.write("\n".join(xml).encode("utf-8"))
-                return
-
             q = dict(urllib.parse.parse_qsl(p.query)).get("q", "").strip()
             res_html, h_tag = "", ""
             if q:
                 hq = hinglish_to_hindi(q)
                 if hq != q:
                     h_tag = '<div class="hindi-note">हिंदी में खोजा गया: <b>' + html.escape(hq) + '</b></div>'
-                t, ans = get_answer(hq, q)
+                t, ans = smart_dynamic_search(hq, q)
                 if ans:
                     res_html += '<div class="result-box"><div class="ai-tag"><span>AI कृष्णा विनोद सटीक जवाब (हिंदी)</span><button class="speak-btn" onclick="speakAnswer()">सुनें</button></div><div id="exactNameBox" class="direct-ans">' + html.escape(t) + '</div><div id="answerText">' + html.escape(ans) + '</div></div>'
                 vid = get_youtube_video_id(q) or (get_youtube_video_id(hq) if hq != q else None)
-                e_url = make_url("://youtube-nocookie.com", "/embed/" + vid) if vid else make_url("://youtube-nocookie.com", "/embed", {"listType": "search", "list": q})
-                yt_link = make_url("://youtube.com", "/results", {"search_query": q})
+                e_url = make_url("youtube-nocookie.com", "/embed/" + vid) if vid else make_url("youtube-nocookie.com", "/embed", {"listType": "search", "list": q})
+                yt_link = make_url("youtube.com", "/results", {"search_query": q})
                 res_html += '<div class="result-box"><div class="ai-tag"><span>AI टीवी - YouTube वीडियो</span></div><div class="tv-frame"><div class="video-container"><iframe src="' + html.escape(e_url) + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div></div><div style="text-align:center;"><a href="' + html.escape(yt_link) + '" target="_blank" class="yt-open-btn">YouTube ऐप में सभी वीडियो देखें</a></div></div>'
+            
             page = HTML_PAGE.replace("__QUERY__", html.escape(q)).replace("__HINDI_TAG__", h_tag).replace("__RESULT__", res_html)
             page = page.replace("__RAW_UPI_ID__", html.escape(MY_UPI_ID)).replace("__UPI_ID__", urllib.parse.quote(MY_UPI_ID)).replace("__UPI_NAME__", urllib.parse.quote(MY_NAME))
             self.send_response(200)
