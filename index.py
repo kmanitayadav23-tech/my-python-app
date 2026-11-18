@@ -200,27 +200,27 @@ def smart_dynamic_search(hq, oq):
     # 1. लाइव मौसम चेक
     if any(w in qc for w in ["मौसम", "weather", "temperature", "तापमान", "mausam"]):
         clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai|mausam)\b", "", oq, flags=re.I)
-        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.|,)", "", clean_city).strip()
+        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.,)", "", clean_city).strip()
         city = clean_city if len(clean_city) >= 2 else "Delhi"
         w_ans = fetch_weather(city)
         if w_ans:
             return f"लाइव मौसम अपडेट ({city})", w_ans
         return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. सटीक और साफ सर्च टर्म तय करना (गलत परिणामों से बचने के लिए)
-    search_en = translate_text(oq, "en")
-    
+    # 2. हिंदी विकिपीडिया को प्राथमिकता देना ताकि जवाब हिंदी में आए
+    search_term = oq
     if "rashtrapati" in qc or "president" in qc:
-        search_en = "Droupadi Murmu" if not ("pehla" in qc or "first" in qc) else "Rajendra Prasad"
+        search_term = "द्रौपदी मुर्मू" if not ("pehla" in qc or "first" in qc) else "राजेंद्र प्रसाद"
     elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
-        search_en = "Narendra Modi" if not ("pehla" in qc or "first" in qc) else "Jawaharlal Nehru"
+        search_term = "नरेंद्र मोदी" if not ("pehla" in qc or "first" in qc) else "जवाहरलाल नेहरू"
 
-    for lang, query_term in [("en", search_en), ("hi", hq)]:
+    # सबसे پہلے हिंदी विकिपीडिया (`hi`) से डेटा खोजेंगे
+    for lang in ["hi", "en"]:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {
                 "action": "query",
                 "list": "search",
-                "srsearch": query_term,
+                "srsearch": search_term,
                 "format": "json"
             })
             req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
