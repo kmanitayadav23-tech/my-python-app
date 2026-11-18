@@ -9,7 +9,7 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # जेमिनी मॉडल सेटअप (gemini-2.5-flash मल्टीमॉडल और चैट दोनों के लिए सबसे बेस्ट है)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-pro')
 
 chat_session = model.start_chat(history=[])
 
