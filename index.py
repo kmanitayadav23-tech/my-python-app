@@ -88,8 +88,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             user_message = data.get('message', 'Hello')
 
             try:
-                # यहाँ सीधा और सही v1 वर्शन वाला URL सेट है
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GOOGLE_API_KEY}"
+                # यहाँ gemini-pro के साथ सही URL सेट है
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GOOGLE_API_KEY}"
                 
                 req_body = {"contents": [{"parts": [{"text": user_message}]}]}
                 req_data = json.dumps(req_body).encode('utf-8')
@@ -112,4 +112,4 @@ if __name__ == '__main__':
     server = HTTPServer(('0.0.0.0', port), RequestHandler)
     print(f"Server running on port {port}...")
     server.serve_forever()
-    
+            
