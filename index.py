@@ -195,6 +195,7 @@ def fetch_wiki(lang, title):
         pass
     return None, None
 def smart_dynamic_search(hq, oq):
+def smart_dynamic_search(hq, oq):
     qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
 
     # 1. लाइव मौसम चेक
@@ -207,14 +208,14 @@ def smart_dynamic_search(hq, oq):
             return f"लाइव मौसम अपडेट ({city})", w_ans
         return f"मौसम अपडेट ({city})", f"फिलहाल {city} का लाइव मौसम डेटा उपलब्ध नहीं है।"
 
-    # 2. हिंदी विकिपीडिया को प्राथमिकता देना ताकि जवाब हिंदी में आए
+    # 2. प्रमुख राजनीतिक पदों के लिए सटीक और वर्तमान सर्च टर्म
     search_term = oq
     if "rashtrapati" in qc or "president" in qc:
         search_term = "द्रौपदी मुर्मू" if not ("pehla" in qc or "first" in qc) else "राजेंद्र प्रसाद"
     elif "pradhanmantri" in qc or "prime minister" in qc or re.search(r"\bpm\b", qc):
         search_term = "नरेंद्र मोदी" if not ("pehla" in qc or "first" in qc) else "जवाहरलाल नेहरू"
 
-    # सबसे پہلے हिंदी विकिपीडिया (`hi`) से डेटा खोजेंगे
+    # 3. हिंदी और अंग्रेजी विकिपीडिया से लाइव डेटा फेच करना
     for lang in ["hi", "en"]:
         try:
             u = make_url(lang + ".wikipedia.org", "/w/api.php", {
@@ -233,7 +234,8 @@ def smart_dynamic_search(hq, oq):
                         return t, ext
         except Exception:
             pass
-    return None, None
+            
+    return "परिणाम", "क्षमा करें, इस विषय पर वर्तमान में कोई जानकारी उपलब्ध नहीं है।"
 
 def generate_ai_chat_reply(user_msg):
     # बेसिक बातचीत के जवाब
