@@ -1,19 +1,13 @@
 import os
 import json
 import base64
+import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import google.generativeai as genai
 
-# अपने Gemini API Key को यहाँ सेट करें
+# अपने Gemini API Key को यहाँ से उठाएगा
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
-genai.configure(api_key=GOOGLE_API_KEY)
 
-# जेमिनी मॉडल सेटअप (gemini-2.5-flash मल्टीमॉडल और चैट दोनों के लिए सबसे बेस्ट है)
-model = genai.GenerativeModel('gemini-1.5-pro')
-
-chat_session = model.start_chat(history=[])
-
-# सुंदर HTML, CSS और JavaScript वाला इंटरफेस (UI, Chat Media)
+# सुंदर HTML, CSS और JavaScript वाला इंटरफेस
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -51,13 +45,15 @@ HTML_PAGE = """<!DOCTYPE html>
 
     <script>
         let selectedImageBase64 = null;
+        let selectedMimeType = null;
 
         document.getElementById('imageInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
+                selectedMimeType = file.type;
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    selectedImageBase64 = event.target.result;
+                    selectedImageBase64 = event.target.result.split(',')[1];
                     alert("फोटो चुन ली गई है! अब अपना सवाल लिखकर भेजें।");
                 };
                 reader.readAsDataURL(file);
@@ -73,19 +69,13 @@ HTML_PAGE = """<!DOCTYPE html>
             const userDiv = document.createElement('div');
             userDiv.className = 'message user-message';
             userDiv.innerText = text || "फोटो भेजी गई";
-            if (selectedImageBase64) {
-                const img = document.createElement('img');
-                img.src = selectedImageBase64;
-                img.className = 'preview';
-                userDiv.appendChild(document.createElement('br'));
-                userDiv.appendChild(img);
-            }
             chatBox.appendChild(userDiv);
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            const payload = { message: text, image: selectedImageBase64 };
+            const payload = { message: text, image: selectedImageBase64, mime_type: selectedMimeType };
             selectedImageBase64 = null;
+            selectedMimeType = null;
             document.getElementById('imageInput').value = '';
 
             try {
@@ -125,20 +115,34 @@ class RequestHandler(BaseHTTPRequestHandler):
             data = json.loads(post_data.decode('utf-8'))
             
             user_message = data.get('message', '')
-            image_data = data.get('image', None)
+            image_base64 = data.get('image', None)
+            mime_type = data.get('mime_type', 'image/jpeg')
 
             try:
-                if image_data:
-                    header, encoded = image_data.split(",", 1)
-                    mime_type = header.split(";")[0].split(":")[1]
-                    image_bytes = base64.b64decode(encoded)
-                    image_part = {"mime_type": mime_type, "data": image_bytes}
-                    prompt = user_message if user_message else "इस तस्वीर के बारे में विस्तार से बताएं।"
-                    response = model.generate_content([prompt, image_part])
-                else:
-                    response = chat_session.send_message(user_message)
+                # सीधे Google AI Studio की ऑफिशियल REST API का उपयोग (Gemini 1.5 Flash Direct URL)
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GOOGLE_API_KEY}"
                 
-                reply_text = response.text
+                parts = []
+                if user_message:
+                    parts.append({"text": user_message})
+                if image_base64:
+                    parts.append({
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": image_base64
+                        }
+                    })
+                if not parts:
+                    parts.append({"text": "Hello"})
+
+                req_body = {"contents": [{"parts": parts}]}
+                req_data = json.dumps(req_body).encode('utf-8')
+
+                req = urllib.request.Request(url, data=req_data, headers={'Content-Type': 'application/json'}, method='POST')
+                
+                with urllib.request.urlopen(req) as response:
+                    res_json = json.loads(response.read().decode('utf-8'))
+                    reply_text = res_json['candidates'][0]['content']['parts'][0]['text']
             except Exception as e:
                 reply_text = f"एरर आ गई: {str(e)}"
 
@@ -152,4 +156,4 @@ if __name__ == '__main__':
     server = HTTPServer(('0.0.0.0', port), RequestHandler)
     print(f"Server running on port {port}...")
     server.serve_forever()
-    
+                
