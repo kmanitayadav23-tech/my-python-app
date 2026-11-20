@@ -58,47 +58,84 @@ def get_youtube_video_id(query):
                 if ids: return ids[0]
         except Exception: pass
     return None
-def smart_dynamic_search(hq, oq):
-    qc = re.sub(r"[?!\.,]", "", (hq + " " + oq).lower()).strip()
-    if any(w in qc for w in ["मौसम", "weather", "temperature", "तापमान", "mausam"]):
-        clean_city = re.sub(r"\b(weather|temperature|forecast|report|today|now|ka|ki|ke|in|of|at|tell|me|what|is|the|kaun|kaisa|hai|mausam)\b", "", oq, flags=re.I)
-        clean_city = re.sub(r"(मौसम|तापमान|हाल|कैसा|है|का|की|के|में|आज|बताओ|जरा|\?|\.,)", "", clean_city).strip()
-        city = clean_city if len(clean_city) >= 2 else "Delhi"
-        w_ans = fetch_weather(city)
-        if w_ans: return f"लाइव मौसम अपडेट ({city})", w_ans, ""
+def check_language(text):
+    if re.search(r"[\u0900-\u097F]", text):
+        return "hi"
+    hinglish_words = ["ka", "ki", "ke", "kaun", "kya", "hai", "hain", "bharat", "mausam", "kab", "kahan", "kaise", "batao", "kyun"]
+    words = re.findall(r"\b[a-z]+\b", text.lower())
+    if any(w in hinglish_words for w in words):
+        return "hi"
+    return "en"
 
-    # 1. Wikipedia REST Summary API (तस्वीर के साथ डेटा लाने के लिए)
-    for query in [oq, hq]:
-        for lang in ["hi", "en"]:
+def smart_dynamic_search(hq, oq):
+    user_lang = check_language(oq)
+
+    # पूरी तरह डायरेक्ट और नेचुरल सर्च (बिना किसी फालतू रोक-टोक के)
+    clean_q = re.sub(r"\b(who is|what is|tell me about|the|a|an|kaun hai|kya hai|कौन है|क्या है|के बारे में|बताओ)\b", "", oq, flags=re.I).strip()
+    if not clean_q:
+        clean_q = oq
+
+    search_list = [hinglish_to_hindi(clean_q), clean_q] if user_lang == "hi" else [clean_q]
+    lang_order = ["hi", "en"] if user_lang == "hi" else ["en", "hi"]
+
+    for q_item in search_list:
+        for lang in lang_order:
             try:
-                u = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(query)
+                # विकिपीडिया से सीधा सटीक पेज ढूंढें
+                s_url = f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&search={urllib.parse.quote(q_item)}&limit=1&format=json"
+                req_s = urllib.request.Request(s_url, headers={"User-Agent": "AIKrishnaVinod/1.0"})
+                with urllib.request.urlopen(req_s, timeout=4) as res_s:
+                    s_data = json.loads(res_s.read().decode("utf-8"))
+                    exact_title = s_data[1][0] if (len(s_data) > 1 and s_data[1]) else q_item
+
+                # उस पेज का सारांश और फोटो सीधे उठा लें
+                u = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(exact_title)
                 req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinod/1.0"})
                 with urllib.request.urlopen(req, timeout=4) as res:
                     d = json.loads(res.read().decode("utf-8"))
                     extract = d.get("extract", "")
-                    title = d.get("title", "परिणाम")
-                    img_url = ""
-                    if "thumbnail" in d and "source" in d["thumbnail"]:
-                        img_url = d["thumbnail"]["source"]
+                    title = d.get("title", exact_title)
+                    img_url = d.get("thumbnail", {}).get("source", "")
+                    
                     if extract:
-                        if lang == "en":
-                            extract = translate_text(extract, "hi")
-                            title = translate_text(title, "hi")
+                        if lang != user_lang:
+                            extract = translate_text(extract, user_lang)
+                            title = translate_text(title, user_lang)
                         return title, extract, img_url
-            except Exception: pass
+            except Exception:
+                pass
 
-    # 2. DuckDuckGo Fallback
+    # DuckDuckGo डायरेक्ट फॉलबैक
     try:
-        ddg_url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(oq)}&format=json&no_html=1&skip_disambig=1"
+        en_query = clean_q if user_lang == "en" else translate_text(clean_q, "en")
+        ddg_url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(en_query)}&format=json&no_html=1&skip_disambig=1"
         req = urllib.request.Request(ddg_url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=4) as res:
-            abstract = json.loads(res.read().decode("utf-8")).get("AbstractText", "")
-            if abstract: return "वेब सारांश (DuckDuckGo)", translate_text(abstract, "hi"), ""
-    except Exception: pass
+            ddg_d = json.loads(res.read().decode("utf-8"))
+            abstract = ddg_d.get("AbstractText", "")
+            heading = ddg_d.get("Heading", clean_q)
+            if abstract:
+                if user_lang == "en":
+                    return heading, abstract, ""
+                return translate_text(heading, "hi"), translate_text(abstract, "hi"), ""
+    except Exception:
+        pass
 
-    if "rashtrapati" in qc or "president" in qc: return "द्रौपदी मुर्मू", "भारत की वर्तमान राष्ट्रपति द्रौपदी मुर्मू हैं।", ""
-    elif "pradhanmantri" in qc or "prime minister" in qc: return "नरेंद्र मोदी", "भारत के वर्तमान प्रधानमंत्री नरेंद्र मोदी हैं।", ""
-    return "AI कृष्णा विनोद स्मार्ट सर्च", f"'{oq}' के संबंध में इंटरनेट पर अभी विस्तृत डेटा उपलब्ध नहीं है।", ""
+    if user_lang == "en":
+        return "AI Krishna Vinod Search", f"No live summary found for '{oq}'. Try asking in the AI Chat tab!", ""
+    return "AI कृष्णा विनोद स्मार्ट सर्च", f"'{oq}' के संबंध में इंटरनेट पर अभी जानकारी उपलब्ध नहीं है।", ""
+
+def generate_ai_chat_reply(user_msg):
+    low = user_msg.lower().strip()
+    user_lang = check_language(user_msg)
+    if any(g in low for g in ["hello", "hi", "namaste", "नमस्ते", "हेलो", "कैसे हो"]):
+        return "Hello! I am AI Krishna Vinod. How can I help you?" if user_lang == "en" else "नमस्ते! मैं AI कृष्णा विनोद हूँ। मैं आपकी क्या सहायता कर सकता हूँ?"
+    hq = hinglish_to_hindi(user_msg)
+    title, ans, img = smart_dynamic_search(hq, user_msg)
+    if ans:
+        return f"📌 {title}:\n\n{ans}"
+    return "Sorry, I couldn't find exact info on that." if user_lang == "en" else "मुझे इस विषय पर अभी सटीक जानकारी नहीं मिल पाई है।"
+
 
 def generate_ai_chat_reply(user_msg):
     low = user_msg.lower().strip()
