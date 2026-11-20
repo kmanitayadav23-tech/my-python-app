@@ -65,202 +65,36 @@ def check_language(text):
     words = re.findall(r"\b[a-z]+\b", text.lower())
     if any(w in hinglish_words for w in words):
         return "hi"
-    return "en"
-# ==============================================================================
-# SECTION 1: ENTERPRISE-GRADE MULTILINGUAL TOKENIZER & SCRIPT ANALYZER
-# ==============================================================================
-def check_language(text):
-    """
-    Analyzes text structure to dynamically determine if the input 
-    belongs to Hindi (Devanagari/Hinglish) or pure English.
-    """
-    if not text:
         return "en"
-    
-    # Check for Devanagari script presence
-    if re.search(r"[\u0900-\u097F]", text):
-        return "hi"
-    
-    # Comprehensive Indian and Hinglish lexicon mapping
-    hinglish_keywords = {
-        "ka", "ki", "ke", "ko", "mein", "par", "hai", "hain", "tha", "the", 
-        "kaun", "kya", "kahan", "kaise", "kab", "kyun", "batao", "dikhao", 
-        "bharat", "mausam", "rashtrapati", "pradhanmantri", "aaj", "kal", 
-        "kiska", "kiske", "kisi", "kuch", "aur", "ya", "nahi", "haan",
-        "yeh", "woh", "iska", "uska", "karna", "hona", "chahiye", "mera", 
-        "tera", "apna", "kisko", "kaise", "kisne", "kahan", "kidhar"
-    }
-    
-    words = re.findall(r"\b[a-z]+\b", text.lower())
-    match_count = sum(1 for w in words if w in hinglish_keywords)
-    
-    if match_count > 0 or any(w.endswith(('pur', 'abad', 'garh', 'ganj', 'nagar', 'wala')) for w in words):
-        return "hi"
-        
-    return "en"
-
-
-# ==============================================================================
-# SECTION 2: ADVANCED QUERY CLEANER & TEXT NORMALIZATION PIPELINE
-# ==============================================================================
-def normalize_and_clean_query(oq):
-    """
-    Deep cleaning routine to strip conversational filler words, pronouns, 
-    and punctuation marks to expose the core search entity.
-    """
-    if not oq:
-        return ""
-    
-    # Multi-language conversational noise pattern matching
-    noise_patterns = r"\b(who is|what is|where is|when is|how to|tell me about|explain|define|the|a|an|kaun hai|kya hai|kahan hai|kaise hai|कौन है|क्या है|के बारे में|बताओ|जरा|सर्च|करो|please|kindly|batao|dikhao)\b"
-    
-    cleaned = re.sub(noise_patterns, "", oq, flags=re.I)
-    cleaned = re.sub(r"[?!\.,;:]+", "", cleaned).strip()
-    
-    return cleaned if cleaned else oq
-
-
-# ==============================================================================
-# SECTION 3: MULTI-LAYER SEARCH RANKING & SCORING MATRICES
-# ==============================================================================
-def score_and_rank_search_candidates(candidates_list, query_intent):
-    """
-    Evaluates search candidate titles to select the most contextually 
-    relevant article and prevent ambiguous redirections.
-    """
-    if not candidates_list:
-        return None
-    # Return the highest weighted primary match candidate
-    return candidates_list[0]
-
-
-# ==============================================================================
-# SECTION 4: ROBUST WIKIPEDIA DEEP SEARCH & SUMMARY RETRIEVAL PIPELINE
-# ==============================================================================
-def fetch_wikipedia_deep_result(query_term, target_lang):
-    """
-    Performs multi-tiered API queries against Wikipedia OpenSearch and 
-    REST summary endpoints with cross-language fallback logic.
-    """
-    search_variants = [query_term]
-    
-    if target_lang == "hi":
-        translated_q = hinglish_to_hindi(query_term)
-        if translated_q and translated_q != query_term:
-            search_variants.insert(0, translated_q)
-    else:
-        hindi_try = hinglish_to_hindi(query_term)
-        if hindi_try and hindi_try != query_term:
-            search_variants.append(hindi_try)
-
-    lang_priority = ["hi", "en"] if target_lang == "hi" else ["en", "hi"]
-
-    for q_item in search_variants:
-        for lang in lang_priority:
-            try:
-                s_url = f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&search={urllib.parse.quote(q_item)}&limit=5&format=json"
-                req_s = urllib.request.Request(s_url, headers={"User-Agent": "AIKrishnaVinodEnterpriseEngine/4.0"})
-                
-                with urllib.request.urlopen(req_s, timeout=5) as res_s:
-                    s_data = json.loads(res_s.read().decode("utf-8"))
-                    candidates = s_data[1] if (len(s_data) > 1 and s_data[1]) else []
-                    
-                    best_candidate = score_and_rank_search_candidates(candidates, q_item)
-                    if best_candidate:
-                        u = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(best_candidate)
-                        req = urllib.request.Request(u, headers={"User-Agent": "AIKrishnaVinodEnterpriseEngine/4.0"})
-                        
-                        with urllib.request.urlopen(req, timeout=5) as res:
-                            d = json.loads(res.read().decode("utf-8"))
-                            extract = d.get("extract", "")
-                            title = d.get("title", best_candidate)
-                            img_url = d.get("thumbnail", {}).get("source", "")
-                            
-                            if extract:
-                                if lang != target_lang:
-                                    extract = translate_text(extract, target_lang)
-                                    title = translate_text(title, target_lang)
-                                return title, extract, img_url
-            except Exception:
-                continue
-                
-    return None, None, None
-
-
-# ==============================================================================
-# SECTION 5: SECONDARY DUCKDUCKGO WEB FALLBACK LAYER
-# ==============================================
-def fetch_duckduckgo_fallback(query_term, target_lang):
-    """
-    Secondary fallback handler utilizing DuckDuckGo API to fetch instant 
-    answers when primary encyclopedia references are vacant.
-    """
-    try:
-        en_query = query_term if target_lang == "en" else translate_text(query_term, "en")
-        ddg_url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(en_query)}&format=json&no_html=1&skip_disambig=1"
-        
-        req = urllib.request.Request(ddg_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0)"})
-        with urllib.request.urlopen(req, timeout=5) as res:
-            ddg_d = json.loads(res.read().decode("utf-8"))
-            abstract = ddg_d.get("AbstractText", "")
-            heading = ddg_d.get("Heading", query_term)
-            
-            if abstract:
-                if target_lang == "en":
-                    return heading, abstract, ""
-                return translate_text(heading, "hi"), translate_text(abstract, "hi"), ""
-    except Exception:
-        pass
-        
-    return None, None, None
-
-
-# ==============================================================================
-# SECTION 6: CORE MASTER SMART SEARCH PIPELINE ORCHESTRATOR
-# ==============================================
 def smart_dynamic_search(hq, oq):
-    """
-    Primary engine controller managing multi-source data routing, language 
-    synchronization, and error-free fallback generation.
-    """
-    if not oq:
-        return "", "", ""
-        
     user_lang = check_language(oq)
     clean_query = normalize_and_clean_query(oq)
     
-    # Execution Step 1: Deep Wikipedia Search Pipeline
+    # 1. Primary Wikipedia Deep Search Pipeline
     title, extract, img_url = fetch_wikipedia_deep_result(clean_query, user_lang)
     if extract:
         return title, extract, img_url
 
-    # Execution Step 2: DuckDuckGo Web Fallback Layer
+    # 2. Secondary DuckDuckGo Web Fallback Layer
     title, extract, img_url = fetch_duckduckgo_fallback(clean_query, user_lang)
     if extract:
         return title, extract, img_url
 
-    # Execution Step 3: Localized Graceful Fallback Messages
+    # 3. Graceful Localized Fallback
     if user_lang == "en":
         return "AI Krishna Vinod Search Engine", f"No live verified records found for '{oq}'. Please explore the AI Chat tab for interactive assistance.", ""
     return "AI कृष्णा विनोद स्मार्ट सर्च", f"'{oq}' के संबंध में इंटरनेट डेटाबेस पर अभी कोई सत्यापित लाइव परिणाम उपलब्ध नहीं है। कृपया नीचे दिए गए AI चैट बॉक्स का उपयोग करें।"
 
 
-# ==============================================================================
-# SECTION 7: ADVANCED CONVERSATIONAL AI CHAT & INTENT PROCESSOR
-# ==============================================
 def generate_ai_chat_reply(user_msg):
-    """
-    Handles chat intents, general greetings, and dispatches complex searches 
-    directly to the master orchestration pipeline.
-    """
     if not user_msg:
         return "Please type a valid message."
     
     user_lang = check_language(user_msg)
     low = user_msg.lower().strip()
     
-    greetings_en = ["hello", "hi", "namaste", "hey", "good morning", "good evening", "sup", "hey there"]
-    greetings_hi = ["नमस्ते", "हैलो", "हेलो", "प्रणाम", "कैसे हो", "क्या हाल है", "नमस्कार"]
+    greetings_en = ["hello", "hi", "namaste", "hey", "good morning", "good evening"]
+    greetings_hi = ["नमस्ते", "हैलो", "हेलो", "प्रणाम", "कैसे हो", "क्या हाल है"]
     
     if any(g in low for g in greetings_en + greetings_hi):
         if user_lang == "en":
@@ -277,26 +111,6 @@ def generate_ai_chat_reply(user_msg):
         return "I couldn't fetch precise info right now. Try rephrasing your query."
     return "मुझे इस विषय पर अभी सटीक डेटा नहीं मिल पाया है। कृपया अपना सवाल थोड़ा बदल कर पूछें।"
 
-def generate_ai_chat_reply(user_msg):
-    low = user_msg.lower().strip()
-    user_lang = check_language(user_msg)
-    if any(g in low for g in ["hello", "hi", "namaste", "नमस्ते", "हेलो", "कैसे हो"]):
-        return "Hello! I am AI Krishna Vinod. How can I help you?" if user_lang == "en" else "नमस्ते! मैं AI कृष्णा विनोद हूँ। मैं आपकी क्या सहायता कर सकता हूँ?"
-    hq = hinglish_to_hindi(user_msg)
-    title, ans, img = smart_dynamic_search(hq, user_msg)
-    if ans:
-        return f"📌 {title}:\n\n{ans}"
-    return "Sorry, I couldn't find exact info on that." if user_lang == "en" else "मुझे इस विषय पर अभी सटीक जानकारी नहीं मिल पाई है।"
-
-
-def generate_ai_chat_reply(user_msg):
-    low = user_msg.lower().strip()
-    if any(g in low for g in ["hello", "hi", "namaste", "नमस्ते", "हेलो", "कैसे हो"]):
-        return "नमस्ते! मैं AI कृष्णा विनोद हूँ। मैं आपकी क्या सहायता कर सकता हूँ?"
-    hq = hinglish_to_hindi(user_msg)
-    title, ans, img = smart_dynamic_search(hq, user_msg)
-    if ans: return f"📌 {title}:\n\n{ans}"
-    return "मुझे इस विषय पर अभी सटीक जानकारी नहीं मिल पाई है।"
 HTML_PAGE = """<!DOCTYPE html><html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Krishna Vinod - स्मार्ट हिंदी AI सर्च इंजन</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
